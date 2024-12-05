@@ -1,4 +1,8 @@
+.Rhistory
+Radio Reach.Rproj
+../Radio Reach.Rproj
 .DS_Store
 cloudrf/input/*
 cloudrf/output/*
 api-key.txt
+.Rproj.user

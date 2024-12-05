@@ -23,6 +23,6 @@ python3 -m pip install -r requirements.txt
 
 1. `./run_cloudRF.sh`
 
-## Roadmpa
+## Roadmap
 
 

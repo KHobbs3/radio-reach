@@ -27,20 +27,38 @@ read -p "Enter the number of the file you want to select or 0 for all: " file_nu
 if [[ $file_number -gt 0 && $file_number -le ${#files[@]} ]]; then
   selected_file=${files[$((file_number-1))]}
   
-  echo "\tYou selected: $selected_file"
-  python3 CloudRF.py area -i /$selected_file -t fem.json -k $APIKEY
+  echo "You selected: $selected_file"
+  python3 CloudRF.py area -i $selected_file -t fem.json -k $APIKEY #-s shp
 
 # if 0 is selected, run all
 elif [ $file_number -eq 0 ]; then
-  echo "\t$file_number - Running CloudRF for all files..."
+  echo "$file_number - Running CloudRF for all files..."
   for f in ${files[@]}; do
-    echo "\t\t" $f
-    python3 CloudRF.py area -i $f -t fem.json -k $APIKEY
+    echo $f
+    python3 CloudRF.py area -i $f -t fem.json -k $APIKEY #-s shp
   done
 
 else
   echo "Invalid selection. Please run the script again."
   exit 1
 fi
+
+# Make output directory
+# mkdir output/unzipped
+
+# Unzip all files
+# for shp in output/*.zip; do
+#   # Extract the doc.kml from the .kmz file
+#   unzip $shp -d output/unzipped/
+#   
+#   # Rename
+#   mv "output/unzipped/coverage.shp" "output/unzipped/$(basename $shp).shp"
+#   mv "output/unzipped/coverage.dbf" "output/unzipped/$(basename $shp).dbf"
+#   mv "output/unzipped/coverage.prj" "output/unzipped/$(basename $shp).prj"
+#   mv "output/unzipped/coverage.shx" "output/unzipped/$(basename $shp).shx"
+# done
+
+# Convert to GPKG
+RScript to_gpkg.R
 
 exit 0

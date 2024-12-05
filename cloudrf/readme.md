@@ -1,4 +1,4 @@
-# Project Title
+# CloudRF
 
 To build raster files of radio station broadcast reach.
 
@@ -16,14 +16,19 @@ Fetch the requirements from [requirements.txt](requirements.txt) with `pip`:
 python3 -m pip install -r requirements.txt
 ```
 
-## Steps
 
+
+## Steps
 1.  Update fem_master.csv using information received from radio partners
     -   `transmitter.alt`: antennae height (from the ground) in metres
     -   `transmitter.lon`: transmitter longitude
     -   `transmitter.lat`: transmitter latitude
     -   `transmitter.txw`: power in watts
     -   `transmitter.frq`: frequency of radio station
+
+2. Run CloudRF
+
+3. Convert KMZ output to GPKG. This step requires [GDAL](https://gdal.org/en/stable/download.html).
 
 ## Environment Variables
 
