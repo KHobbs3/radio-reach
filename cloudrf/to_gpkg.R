@@ -5,21 +5,32 @@ library('dplyr')
 library('mapview')
 
 # Set-up ----
-# country to run analysis
-country_list <- list.dirs(path = 'reach/populations/', recursive = TRUE, full.names = TRUE) %>% basename()
-print(country_list[2:length(country_list)])
+# # country to run analysis
+# country_list <- list.dirs(path = 'reach/populations/', recursive = TRUE, full.names = TRUE) %>% basename()
+# print(country_list[2:length(country_list)])
+# 
+# country <- readline(prompt = "Enter the country name or type 'all' for all: ")
+# print(paste("Radio reach estimates for: ,", country))
+# Get the command-line arguments
+args <- commandArgs(trailingOnly = TRUE)
 
-country <- readline(prompt = "Enter the country name or type 'all' for all: ")
-print(paste("Radio reach estimates for: ,", country))
+# Parse the keyword arguments
+arg_list <- list()
+for (arg in args) {
+  if (grepl("--", arg)) {
+    key_value <- strsplit(arg, "=")[[1]]
+    if (length(key_value) == 2) {
+      arg_list[[sub("--", "", key_value[1])]] <- key_value[2]
+    }
+  }
+}
 
+# Access the keyword argument
+country <- arg_list[["country"]]
 
 # cloudrf raw output files
 files = list.files(sprintf("cloudrf/output/raw/%s/"), country)
 
-# if (country == 'all'){
-  # TODO: add option to iterate through all
-#   country <- country_list[2:length(country_list)]
-# }
 
 # Test
 file <- files[3]
@@ -32,7 +43,7 @@ for (file in files[8:length(files)]) {
   print(fname)
 
   # Read CloudRF output file
-  cloudrf_data <- st_read(here("cloudrf", "output", "gpkg", country, file), promote_to_multi = FALSE, quiet = TRUE)
+  cloudrf_data <- st_read(here("cloudrf", "output", "raw", country, file), promote_to_multi = FALSE, quiet = TRUE)
   
 
   # simple_data <- st_simplify(valid_data, dTolerance = 0.01)

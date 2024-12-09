@@ -5,10 +5,10 @@
 # 1. Designate input CSV file or select 'all'.
 # 2. Read input CSV file with radio station specs.
 # 3. Run CloudRF
+# 4. Convert CloudRF output (SHP) to GPKG
 
-
-# Prompt user for API key
-# read -p "Enter the CloudRF API-KEY:" APIKEY
+# Prompt user for country
+read -p "Enter the country to analysis:" COUNTRY
 
 # Read API key
 APIKEY=$(<"api-key.txt")
@@ -28,14 +28,14 @@ if [[ $file_number -gt 0 && $file_number -le ${#files[@]} ]]; then
   selected_file=${files[$((file_number-1))]}
   
   echo "You selected: $selected_file"
-  python3 CloudRF.py area -i $selected_file -t fem.json -k $APIKEY -s shp
+  python3 CloudRF.py area -i $selected_file -t fem.json -k $APIKEY -s shp -o "output/raw/${COUNTRY}"
 
 # if 0 is selected, run all
 elif [ $file_number -eq 0 ]; then
   echo "$file_number - Running CloudRF for all files..."
   for f in ${files[@]}; do
     echo $f
-    python3 CloudRF.py area -i $f -t fem.json -k $APIKEY -s shp
+    python3 CloudRF.py area -i $f -t fem.json -k $APIKEY -s shp -o "output/raw/${COUNTRY}"
   done
 
 else
@@ -44,6 +44,6 @@ else
 fi
 
 # Convert to GPKG
-RScript to_gpkg.R
+RScript to_gpkg.R --country=$COUNTRY
 
 exit 0
