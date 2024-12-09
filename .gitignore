@@ -6,3 +6,5 @@ cloudrf/input/*
 cloudrf/output/*
 api-key.txt
 .Rproj.user
+reach/populations/*
+reach/health-centres/*
