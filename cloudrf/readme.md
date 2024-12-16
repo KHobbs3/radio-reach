@@ -8,7 +8,8 @@ To build raster files of radio station broadcast reach.
 
 [Cloud RF User Manual](https://cloudrf.com/documentation/Cloud-RF_user_manual.pdf)
 
-## Requirements
+## Set-up
+### Requirements
 
 Fetch the requirements from [requirements.txt](requirements.txt) with `pip`:
 
@@ -16,7 +17,8 @@ Fetch the requirements from [requirements.txt](requirements.txt) with `pip`:
 python3 -m pip install -r requirements.txt
 ```
 
-
+### CloudRF Settings
+* `fem.json` sets the parameters according to the [CloudRF area schema](https://cloudrf.com/documentation/developer/swagger-ui/#/Create/area)
 
 ## Steps
 1.  Update fem_master.csv using information received from radio partners
