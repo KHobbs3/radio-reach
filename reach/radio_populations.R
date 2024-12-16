@@ -10,6 +10,7 @@ library(mapview)
 library(data.table)
 library(openxlsx)
 library(stringr)
+library(terra)
 
 # DEFINE VARIABLES ------
 # projection for epsg:102022
@@ -45,12 +46,12 @@ sf_list <- lapply(gpkg_files, function(file) {
 })
 
 # Read in the population raster
-population_raster <- raster(list.files(sprintf("reach/populations/%s", country),
+population_raster <- rast(list.files(sprintf("reach/populations/%s", country),
                                        pattern = "\\.tif$", 
                                        full.names = TRUE))
 
 # Set CRS 
-population_raster <- projectRaster(population_raster, crs = proj)
+population_raster <- project(population_raster, crs = proj)
 
 
 # Read in health facilities points
@@ -69,22 +70,29 @@ pop_coverage <- function(polygon) {
   # Mask the raster to only include values within the polygon
   masked_raster <- mask(cropped_raster, polygon)
   
-  # Calculate the total population within the polygon
-  sum(values(masked_raster), na.rm = TRUE)
+  # Calculate the total population within the polygon (sum non-NA values)
+  total_population <- global(masked_raster, fun = "sum", na.rm = TRUE)[1, 1]
+  
+  return(total_population)
 }
 
 
 # ITERATOR ----
-
-km <- 1
 for (km in kilometres){
   print(km)
   
+  # Reproject hf's
+  hf_proj <- st_transform(hf, proj)
+  
   # Buffer points ----
   print(paste("Adding dissolved buffer:", km))
-  hf_buffer <- hf %>% st_buffer(dist = km*1000) %>% st_union()
+  hf_buffer <- hf_proj %>%
+                  st_buffer(dist = km*1000) %>%
+                  st_union() %>%
+                  st_sf()
+  
 
-  table_list <- list()
+  table_list <- list() 
   
   # Iterate through all radio stations and create a list of 
   # facilities *within*
@@ -104,23 +112,21 @@ for (km in kilometres){
     # Reproject the station to match the facility polygon layer
     station <- st_transform(station, proj)
     
-    # Calculate population coverage of station and add it to the buffer population dataframe
-    station_population_R <- pop_coverage(station)
-    
     # Using intersects because people slightly outside radio bounds likely move in bounds
     # !!! N.B. differs from python script
-    intersect_indices <- st_intersects(station, hf_buffer, 2)
-  
-    # Store output of within spatial join
-    intersect_polygons <- hf_buffer[unlist(intersect_indices), ] %>% 
-                                    distinct()
-    print(paste("Number of facilities within radio bounds:", nrow(intersect_polygons)))
+    intersect_polygons <- st_intersection(hf_buffer, station)
+    print(paste("Number of facility clusters within radio bounds:", nrow(intersect_polygons)))
+    
 
     if (length(unlist(intersect_polygons)) > 0) {
       # Get station name and append as new column
       intersect_polygons$source_file <- gsub('\\.gpkg$',"", basename(gpkg_files[i]))
       intersect_polygons <- intersect_polygons %>%
-                                              mutate(population_prop = population_coverage/station_population_R,
+                                              mutate(
+                                                     population_coverage = pop_coverage(intersect_polygons),
+                                                     radio_coverage = pop_coverage(station), # Calculate population coverage of station and add it to the buffer population dataframe
+                                                     kilometre = km,
+                                                     population_prop = population_coverage/station_population_R,
                                                      station_name = station_name)
                                           }
     
@@ -128,19 +134,20 @@ for (km in kilometres){
     table_list[[station_name]] <- intersect_polygons
 
     # Export for each radio station
-    st_write(intersect_polygons, dsn = sprintf("reach/intermediates/%s/%s/%s_%gkm.gpkg", country, station_name, station_name, km),
+    st_write(intersect_polygons, dsn = sprintf("reach/intermediates/%s/%s_%gkm.gpkg", country, station_name, km),
              layer = sprintf("%s", station_name), driver = "GPKG", delete_dsn = TRUE)
     
   }
   
-  # Remove geometry for table export
-  table_list_flat <- lapply(table_list, st_drop_geometry)
-  
-  # Export radio station summary for x-KM
-  write.xlsx(table_list_flat, file = sprintf("dbscan/output/station_facility_populations/radio_buffer_populations_%gkm.xlsx", km))
 }
 
+# Remove geometry for table export
+table_list_flat <- lapply(table_list, st_drop_geometry)
+
+# Export radio station summary for x-KM
+write.xlsx(table_list_flat, file = sprintf("reach/output/%s/buffer_populations_%s.xlsx", country, country))
+
 # check
-mapview::mapview( list(intersect_polygons, station, pop_poly),
+mapview::mapview( list(intersect_polygons, station),
                   col.regions = list("blue", "red", "yellow"))
 

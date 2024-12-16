@@ -3,3 +3,9 @@ ncplib
 asyncio
 matplotlib
 numpy
+mapview
+sf
+here
+stringr
+dplyr
+terra
