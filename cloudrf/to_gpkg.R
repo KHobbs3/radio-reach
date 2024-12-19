@@ -6,13 +6,7 @@ library('mapview')
 library('terra')
 
 # Set-up ----
-# # country to run analysis
-# country_list <- list.dirs(path = 'reach/populations/', recursive = TRUE, full.names = TRUE) %>% basename()
-# print(country_list[2:length(country_list)])
-# 
-# country <- readline(prompt = "Enter the country name or type 'all' for all: ")
-# print(paste("Radio reach estimates for: ,", country))
-# Get the command-line arguments
+# Get the command-line arguments to identify country for analysis
 args <- commandArgs(trailingOnly = TRUE)
 
 # Parse the keyword arguments
@@ -37,11 +31,10 @@ print(files)
 for (file in files[1:length(files)]) {
   
   # Get file name
-  fname <- str_extract(file, "[A-Za-z](.+)(?=\\.gpkg)")
+  fname <- str_extract(file, "[A-Za-z](.+)(?=\\.4326)")
   print(fname)
 
   # Read CloudRF output file
-  # cloudrf_data <- st_read(here("cloudrf", "output", "raw", country, file), promote_to_multi = FALSE, quiet = TRUE)
   cloudrf_data <- rast(here("cloudrf", "output", "raw", country, file))
 
   # Save the polygons as a GeoPackage
