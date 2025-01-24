@@ -22,6 +22,15 @@ df.rename(columns = {
 },
     inplace = True)
 
+# update power to antennae from kW to watts
+df['transmitter.txw'] = df['transmitter.txw'] * 1000
+
+# drop records where power is zero
+zeros = df.loc[df['transmitter.txw'] == 0]
+print(f'dropping {len(zeros)} records with transmitter power = 0')
+
+df = df.loc[df['transmitter.txw'] != 0]
+
 # re-order columns & export
 print(f'Exporting formatted CSV file: ../cloudrf/input/fem.{country}.csv')
 df[['site', 'network',
