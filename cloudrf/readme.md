@@ -22,10 +22,10 @@ python3 -m pip install -r requirements.txt
 
 ## Steps
 1.  Update fem_master.csv using information received from radio partners
-    -   `transmitter.alt`: antennae height (from the ground) in metres
+    -   `transmitter.alt`: Altitude of transmitter above ground level in metric or imperial. Distance unit set in output object.
     -   `transmitter.lon`: transmitter longitude
     -   `transmitter.lat`: transmitter latitude
-    -   `transmitter.txw`: power in watts
+    -   `transmitter.txw`: Transmitter power in watts before the antenna.
     -   `transmitter.frq`: frequency of radio station
 
 2. Run CloudRF

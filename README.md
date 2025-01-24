@@ -28,6 +28,8 @@ python3 -m pip install -r requirements.txt
 
 -   `radio-africa/`: directory for processing radio station specs provided in JSON format for various countries by [radio-africa.org](radio-africa.org).
 
+- `pre-process/`: directory for processing ITU query outputs. Exports CSV file in *cloudrf/input/* folder for radio propagation modelling (step 2).
+
 **2. CloudRF Radio Propagation:**
 
 -   `run_cloudRF.sh`: run selected or all CSV files detailing radio station specs through CloudRF API to generate KMZ files.
@@ -40,6 +42,6 @@ python3 -m pip install -r requirements.txt
 ## Usage
 
 1.  `./run_cloudRF.sh`
-2.  `RScript radio_populations_polygons.R`
+2.  `RScript radio_populations_polygons.R --country="country" --fs="FACILITY SOURCE FOLDER"`
 
 ## Roadmap
