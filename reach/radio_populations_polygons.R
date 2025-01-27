@@ -31,8 +31,8 @@ country <- arg_list[["country"]]
 facility_source <- arg_list[['fs']]
 
 # Read in all possible stations
-filepath = sprintf('cloudrf/output/gpkg/%s', country)
-gpkg_files <- list.files(path = filepath, pattern = "\\.gpkg$", full.names = TRUE, recursive = TRUE)
+filepath = sprintf('cloudrf/output/gpkg/%s/', country)
+gpkg_files <- list.files(path = here(filepath), pattern = "\\.gpkg$", full.names = TRUE, recursive = TRUE)
 
 # Read all .gpkg files into a list of sf objects
 station_list <- lapply(gpkg_files, function(file) {
@@ -80,9 +80,10 @@ population_data <- tibble(source_file = character(),
 # Loop for each distance in km
 for (km in c(5)) {
   print(sprintf("----- KM: %s -----", km))
+  
   hf_buffer <- hf_proj %>% 
     buffer(width = km * 1000) %>% 
-    terra::union()
+    terra::aggregate()
 
   for (i in seq_along(station_list)) {
     station <- station_list[[i]]
@@ -119,7 +120,7 @@ for (km in c(5)) {
       # Export as GeoPackage
       print("Exporting intermediate output..")
       # polygons <- as.polygons(masked_polygons_aligned)  # Convert SpatRaster to polygons
-      writeVector(cropped_polygons, filename = sprintf("reach/intermediates/%s/polygons_%s_%gkm.gpkg", country, sname, km),
+      writeVector(cropped_polygons, filename = here(sprintf("reach/intermediates/%s/polygons_%s_%gkm.gpkg", country, sname, km)),
                overwrite = TRUE)
     }
   }
@@ -131,5 +132,11 @@ write.csv(population_data, here("reach", "output", country, sprintf("%s_summary_
 print("Fin.")
 
 # Checks
-mapview(hf_buffer) + mapview(station_list[[2]]) +  mapview(station_list[[3]]) + 
-mapview(cropped_polygons)
+library(mapview)
+
+# Add custom colors for each layer
+mapview(hf_buffer, col.regions = "blue") +
+  mapview(station_list[[3]], col.regions = "red") +
+  mapview(cropped_polygons, col.regions = "green")  
+
+
