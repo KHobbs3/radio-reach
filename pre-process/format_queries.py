@@ -25,14 +25,21 @@ df.rename(columns = {
 # update power to antennae from kW to watts
 df['transmitter.txw'] = df['transmitter.txw'] * 1000
 
-# drop records where power is zero
-zeros = df.loc[df['transmitter.txw'] == 0]
-print(f'dropping {len(zeros)} records with transmitter power = 0')
+# drop records where power is zero or negative
+# negative transmitters are likely:
+# * receivers
+# * Directional antennaes: have a mismatch between electric and magnetic wave polarization for transmitters and receivers (ie. horizontal and vertical)
+# * error points
+# * Power loss in the transmission system (e.g., due to cables, filters, or propagation through the air) can result in negative power values relative to the reference level.
+# * other indicators of unsuitable transmission
 
-df = df.loc[df['transmitter.txw'] != 0]
+negatives = df.loc[df['transmitter.txw'] <= 0]
+print(f'dropping {len(negatives)} records with transmitter power at or below 0')
+df = df.loc[df['transmitter.txw'] > 0]
+print(f'{len(df)} remaining records.')
 
 # re-order columns & export
-print(f'Exporting formatted CSV file: ../cloudrf/input/fem.{country}.csv')
+print(f'Exporting formattedCSV file: ../cloudrf/input/fem.{country}.csv')
 df[['site', 'network',
     'transmitter.lat', 'transmitter.lon',
     'transmitter.alt', 'transmitter.txw', 'transmitter.frq']]\
