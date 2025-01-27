@@ -24,7 +24,7 @@ for (arg in args) {
 country <- arg_list[["country"]]
 
 # cloudrf raw output files
-files = list.files(here("cloudrf", sprintf("output/raw/%s/", country)))
+files = list.files(here("cloudrf", sprintf("output/raw/%s/", country)), pattern = '.tiff$')
 print(files)
 
 # Iterate ----
