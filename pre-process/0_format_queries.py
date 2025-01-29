@@ -8,7 +8,7 @@ warnings.filterwarnings("ignore")
 country = sys.argv[1]
 
 # read file
-df = pd.read_excel(f"itu_queries/{country}.xlsx")
+df = pd.read_excel(f"0. itu_queries/input/{country}.xlsx")
 
 # rename columns
 df.rename(columns = {
@@ -18,7 +18,9 @@ df.rename(columns = {
     'freq_assgn': 'transmitter.frq',
     'hgt_agl' : 'transmitter.alt',
     'long_dec': 'transmitter.lon',
-    'lat_dec': 'transmitter.lat'
+    'lat_dec': 'transmitter.lat',
+    'azm_max_e': 'antenna.azi', # azimorth
+    'bmwdth':  'antenna.hbw' # horizontal beamwidth
 },
     inplace = True)
 
@@ -33,15 +35,22 @@ df['transmitter.txw'] = df['transmitter.txw'] * 1000
 # * Power loss in the transmission system (e.g., due to cables, filters, or propagation through the air) can result in negative power values relative to the reference level.
 # * other indicators of unsuitable transmission
 
+# power
 negatives = df.loc[df['transmitter.txw'] <= 0]
 print(f'dropping {len(negatives)} records with transmitter power at or below 0')
 df = df.loc[df['transmitter.txw'] > 0]
 print(f'{len(df)} remaining records.')
 
+# frequency
+negatives = df.loc[df['transmitter.frq'] <= 1]
+print(f'dropping {len(negatives)} records with transmitter frequency is at or below 1')
+df = df.loc[df['transmitter.frq'] > 1]
+print(f'{len(df)} remaining records.')
+
 # re-order columns & export
-print(f'Exporting formattedCSV file: ../cloudrf/input/fem.{country}.csv')
+print(f'Exporting formattedCSV file: 0. itu_queries/output/fem.{country}.csv')
 df[['site', 'network',
     'transmitter.lat', 'transmitter.lon',
     'transmitter.alt', 'transmitter.txw', 'transmitter.frq']]\
-        .to_csv(f'../cloudrf/input/fem.{country}.csv', index=False)
+        .to_csv(f'0. itu_queries/output/{country}.csv', index=False)
 print('Fin.')
