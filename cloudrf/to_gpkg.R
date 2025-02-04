@@ -31,7 +31,8 @@ print(files)
 for (file in files[1:length(files)]) {
   
   # Get file name
-  fname <- str_extract(file, "[A-Za-z](.+)(?=\\.4326)")
+  # fname <- str_extract(file, "[A-Za-z](.+)(?=\\.4326)")
+  fname <- file
   print(fname)
 
   # Read CloudRF output file
@@ -42,3 +43,4 @@ for (file in files[1:length(files)]) {
               overwrite = TRUE)
 
 }
+

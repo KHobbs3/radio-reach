@@ -13,16 +13,16 @@
     "engine": 2,
     "coordinates": 1,
     "transmitter": {
-        "lat": 50.866062, 
-        "lon": -1.137308, 
-        "alt": 2,         
-        "frq": 868, 
-        "txw": 0.1, 
+        "lat": 50.866062,
+        "lon": -1.137308,
+        "alt": 2,       
+        "frq": 868,
+        "txw": 0.1,
         "bwi": 0.1, 
         "powerUnit": "W"
     },
     "receiver": {
-        "lat": 0, 
+        "lat": 0,
         "lon": 0,
         "alt": 0.1,
         "rxg": 2.15,

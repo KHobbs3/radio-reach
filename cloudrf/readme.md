@@ -9,6 +9,7 @@ To build raster files of radio station broadcast reach.
 [Cloud RF User Manual](https://cloudrf.com/documentation/Cloud-RF_user_manual.pdf)
 
 ## Set-up
+
 ### Requirements
 
 Fetch the requirements from [requirements.txt](requirements.txt) with `pip`:
@@ -18,19 +19,24 @@ python3 -m pip install -r requirements.txt
 ```
 
 ### CloudRF Settings
-* `fem.json` sets the parameters according to the [CloudRF area schema](https://cloudrf.com/documentation/developer/swagger-ui/#/Create/area)
+
+-   `fem.json` sets the parameters according to the [CloudRF area schema](https://cloudrf.com/documentation/developer/swagger-ui/#/Create/area)
 
 ## Steps
-1.  Update fem_master.csv using information received from radio partners
+
+1.  Create [countryname].csv using information received from radio partners or a database
+
     -   `transmitter.alt`: Altitude of transmitter above ground level in metric or imperial. Distance unit set in output object.
     -   `transmitter.lon`: transmitter longitude
     -   `transmitter.lat`: transmitter latitude
     -   `transmitter.txw`: Transmitter power in watts before the antenna.
     -   `transmitter.frq`: frequency of radio station
+    -   `antenna.azi`: azimuth of antenna (direction of highest frequency)
+    -   `antenna.hbw`: horizontal beamwidth
 
-2. Run CloudRF
+2.  Run CloudRF
 
-3. Convert KMZ output to GPKG. This step requires [GDAL](https://gdal.org/en/stable/download.html).
+3.  Convert KMZ output to GPKG. This step requires [GDAL](https://gdal.org/en/stable/download.html).
 
 ## Environment Variables
 
