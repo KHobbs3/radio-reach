@@ -22,9 +22,11 @@ for (arg in args) {
 
 # Access the keyword argument
 country <- arg_list[["country"]]
+file_format <- arg_list[["format"]]
+
 
 # cloudrf raw output files
-files = list.files(here("cloudrf", sprintf("output/raw/%s/", country)), pattern = '.tiff$')
+files = list.files(here("cloudrf", sprintf("output/raw/%s/", country)), pattern = sprintf('.%s$',file_format))
 print(files)
 
 # Iterate ----
