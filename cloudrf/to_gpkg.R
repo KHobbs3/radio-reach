@@ -24,9 +24,9 @@ for (arg in args) {
 country <- arg_list[["country"]]
 file_format <- arg_list[["format"]]
 
-
 # cloudrf raw output files
-files = list.files(here("cloudrf", sprintf("output/raw/%s/", country)), pattern = sprintf('.%s$',file_format))
+files = list.files(here("cloudrf", sprintf("output/raw/%s/", country)),
+                   pattern = sprintf('.%s$',file_format))
 print(files)
 
 # Iterate ----
@@ -38,7 +38,8 @@ for (file in files[1:length(files)]) {
   print(fname)
 
   # Read CloudRF output file
-  cloudrf_data <- rast(here("cloudrf", "output", "raw", country, file))
+  cloudrf_data <- rast(here("cloudrf", "output", "raw", country, file),
+                       lyrs = 1)
 
   # Save the polygons as a GeoPackage
   terra::writeRaster(cloudrf_data, here("cloudrf", sprintf("output/gpkg/%s/%s.gpkg", country, fname)),
