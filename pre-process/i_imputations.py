@@ -27,7 +27,6 @@ for file in glob.glob('0. itu_queries/output/*'):
     # read CSV as dataframe
     df = pd.read_csv(file)
 
-
     # impute default antenna azi and hbw from fem.json (cloudrf template)
     df.fillna({'antenna.azi': 0}, inplace =True)
     df.fillna({'antenna.hbw': 120}, inplace =True)

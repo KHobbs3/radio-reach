@@ -1,0 +1,5 @@
+site,network,transmitter.lat,transmitter.lon,transmitter.alt,transmitter.txw,transmitter.frq,antenna.azi,antenna.hbw
+GAO,2763368,16.2666666666666,-0.05,,14800.0,3.595,,
+KOUTIALA,2763365,12.6333333333333,-5.5,,27000.0,3.585,,
+MOPTI,2763553,14.4666666666666,-4.25,,20000.0,5.442,,
+MOPTI,2763554,14.4666666666666,-4.25,,20000.0,5.442,,
