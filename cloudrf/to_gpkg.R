@@ -22,27 +22,38 @@ for (arg in args) {
 
 # Access the keyword argument
 country <- arg_list[["country"]]
+table <- arg_list[["table"]]
 file_format <- arg_list[["format"]]
 
+# Define output directory
+outpath = sprintf("output/gpkg/%s/%s/", country, table)
+
+# Create output directory
+if (dir.exists(outpath) == F){
+  dir.create(outpath)
+}
+
+
+# Read files ----
 # cloudrf raw output files
-files = list.files(here("cloudrf", sprintf("output/raw/%s/", country)),
+files = list.files(here("cloudrf", sprintf("output/raw/%s/%s/", country, table)),
                    pattern = sprintf('.%s$',file_format))
 print(files)
+
 
 # Iterate ----
 for (file in files[1:length(files)]) {
   
   # Get file name
-  # fname <- str_extract(file, "[A-Za-z](.+)(?=\\.4326)")
   fname <- file
   print(fname)
 
   # Read CloudRF output file
-  cloudrf_data <- rast(here("cloudrf", "output", "raw", country, file),
+  cloudrf_data <- rast(here("cloudrf", "output", "raw", country, table, file),
                        lyrs = 1)
 
   # Save the polygons as a GeoPackage
-  terra::writeRaster(cloudrf_data, here("cloudrf", sprintf("output/gpkg/%s/%s.gpkg", country, fname)),
+  terra::writeRaster(cloudrf_data, here("cloudrf", outpath, sprintf("%s.gpkg", fname)),
               overwrite = TRUE)
 
 }

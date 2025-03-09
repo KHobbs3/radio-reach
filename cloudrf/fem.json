@@ -60,7 +60,7 @@
     },
     "output": {
         "units": "m",
-        "col": "BW.dBm",
+        "col": "RAINBOW45.dBm",
         "out": 2,
         "ber": 0,
         "mod": 1,
