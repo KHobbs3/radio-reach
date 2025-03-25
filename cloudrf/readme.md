@@ -21,7 +21,7 @@ python3 -m pip install -r requirements.txt
 ### CloudRF Settings
 
 -   `fem.json` sets the parameters according to the [CloudRF area schema](https://cloudrf.com/documentation/developer/swagger-ui/#/Create/area)
--   `fem_am.json` is updated for AM (low frequency radio waves) stations
+-   `fem.[XX].json` is updated for AM (low frequency radio waves) stations
 
 **Key Changes for AM Radio:**
 
@@ -34,7 +34,7 @@ python3 -m pip install -r requirements.txt
 
 ## Steps
 
-1.  Create [countryname].csv using information received from radio partners or a database
+1.  Create \[countryname\].csv using information received from radio partners or a database
 
     -   `transmitter.alt`: Altitude of transmitter above ground level in metric or imperial. Distance unit set in output object.
     -   `transmitter.lon`: transmitter longitude
@@ -51,15 +51,17 @@ python3 -m pip install -r requirements.txt
 
     -   `antenna.pol`: antennae polarization
 
-    -   `antenna.ant`: add Antenna pattern code:
+    -   `antenna.ant`: Antenna pattern code:
 
         -   0 - Allows custom options (see: hbw; vbw; fbr)
 
         -   1 - Vertical dipole (omni-directional)
 
-2.  Run CloudRF
+2.  Run CloudRF: `./run_cloudRF/sh` .
 
-3.  Convert KMZ output to GPKG. This step requires [GDAL](https://gdal.org/en/stable/download.html).
+3.  Convert KMZ output to GPKG: `raster_to_polygon.ipynb`. This step requires [GDAL](https://gdal.org/en/stable/download.html).
+
+4.  Run reach estimations: see `../reach/` folder for scripts.
 
 ## Environment Variables
 
