@@ -7,8 +7,8 @@ library(purrr)
 proj <- "+proj=sinu +lat_0=0 +lon_0=25 +lat_1=20 +lat_2=-23 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs +type=crs"
 
 # Set country
-country <- 'nigeria'
-subfolder <- 'fem_nigeria/qgis_polygonization'
+country <- 'togo'
+subfolder <- 'fem_togo'
 
 
 # Read population raster and reproject it
@@ -18,7 +18,6 @@ population_raster <- projectRaster(population_raster, crs= proj)
 
 # Get file path
 filepath = file.path("cloudrf", "output/gpkg", country, subfolder)
-# filepath <- readline("Enter path to folder with gpkg files: ")
 print(filepath)
 
 # Get available files
@@ -78,17 +77,25 @@ estimate_overlap <- function(file1, file2) {
     return(data.frame(file1 = basename(file1), file2 = basename(file2), overlap_population = 0))
     
   } else {
-  
-  st_write(overlap, sprintf("cloudrf/output/overlaps/gpkg/%s_%s_overlap.gpkg", basename(file1), basename(file2)),
-           append=F)
-  
-  # Compute population for overlap
-  overlap_population <- exactextractr::exact_extract(population_raster, overlap, 
-                               fun = function(values, coverage_fractions) {
-                                 sum(values * coverage_fractions, na.rm = TRUE)
-                               })
-  
-  return(data.frame(file1 = basename(file1), file2 = basename(file2), overlap_population = overlap_population))
+    
+    tryCatch({
+      # Attempt to write the overlap file
+      st_write(overlap, sprintf("cloudrf/output/overlaps/gpkg/overlap_%s_%s", basename(file1), basename(file2)),
+               append = FALSE)
+      
+      # Attempt to compute population for the overlap
+      overlap_population <- exactextractr::exact_extract(population_raster, overlap, 
+                                                         fun = function(values, coverage_fractions) {
+                                                           sum(values * coverage_fractions, na.rm = TRUE)
+                                                         })
+      
+      return(data.frame(file1 = basename(file1), file2 = basename(file2), overlap_population = overlap_population))
+      
+    }, error = function(e) {
+      message(sprintf("Error processing %s and %s: %s", basename(file1), basename(file2), e$message))
+      return(data.frame(file1 = basename(file1), file2 = basename(file2), overlap_population = NA))
+    })
+    
   }
 }
 
