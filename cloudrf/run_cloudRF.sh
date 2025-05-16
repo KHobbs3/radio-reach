@@ -14,7 +14,7 @@
 APIKEY=$(<"api-key.txt")
 
 # 1. Prompt user for country ----
-read -p "Enter the country to analysis:" COUNTRY
+read -p "Enter the country to analyse:" COUNTRY
 
 
 # 2. List available files in the current directory ----
@@ -25,7 +25,7 @@ for i in "${!folders[@]}"; do
 done
 
 # Select folder for input files
-read -p "Select the folder you want to read files" foldername
+read -p "Select the folder you want to read files " foldername
 
 # Save table name for export
 TABLE=$(basename ${folders[foldername-1]})
@@ -52,7 +52,7 @@ if [[ $file_number -gt 0 && $file_number -le ${#files[@]} ]]; then
   echo "You selected: $selected_file"
 
   # 5. Run cloudRF ----
-  # python3 CloudRF.py area -i $selected_file -t fem.json -k $APIKEY -s tiff -o $OUTDIR
+  python3 CloudRF.py area -i $selected_file -t fem.json -k $APIKEY -s kmz -o output/raw/${COUNTRY}/${TABLE}/
 
 # if 0 is selected, run all
 elif [ $file_number -eq 0 ]; then
@@ -60,17 +60,13 @@ elif [ $file_number -eq 0 ]; then
   for f in ${files[@]}; do
     echo $f
 
-     # 5. Run cloudRF ----
-    # python3 CloudRF.py area -i $f -t fem.json -k $APIKEY -s tiff -o $OUTDIR
+    # 5. Run cloudRF ----
+    python3 CloudRF.py area -i $f -t fem.json -k $APIKEY -s kmz -o output/raw/${COUNTRY}/${TABLE}/
   done
 
 else
   echo "Invalid selection. Please run the script again."
   exit 1
 fi
-
-
-# 6. Convert to GPKG ----
-RScript to_gpkg.R --country=$COUNTRY --table=$TABLE
 
 exit 0
