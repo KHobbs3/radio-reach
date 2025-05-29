@@ -3,18 +3,15 @@ library(argparse)
 library(dplyr)
 library(purrr)
 
-# Set projection
-proj <- "+proj=sinu +lat_0=0 +lon_0=25 +lat_1=20 +lat_2=-23 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs +type=crs"
 
 # Set country
-country <- 'togo'
-subfolder <- 'fem_togo'
+country <- 'niger'
+subfolder <- 'marion_partners'
 
 
 # Read population raster and reproject it
-print("Reprojecting population raster...")
+print("Reading population raster...")
 population_raster <- raster(list.files(here("reach", "populations", country), full.names = T, pattern = "*.tif$")[1])
-population_raster <- projectRaster(population_raster, crs= proj)
 
 # Get file path
 filepath = file.path("cloudrf", "output/gpkg", country, subfolder)
@@ -107,7 +104,7 @@ overlap_df <- bind_rows(map(file_pairs, ~ estimate_overlap(.x[1], .x[2])))
 
 # Print results
 print(overlap_df)
-write.csv(overlap_df, sprintf("cloudrf/output/overlaps/%s_%s_overlap.csv", country, subfolder))   
+write.csv(overlap_df, sprintf("cloudrf/output/overlaps/%s_%s_overlap_orig_proj.csv", country, subfolder))   
 
 # -------------------------------------------------------------------------------------
 ### Estimate population for all *dissolved* stations
