@@ -1,3 +1,4 @@
+.RData
 .Rhistory
 Radio Reach.Rproj
 ../Radio Reach.Rproj
@@ -11,3 +12,7 @@ reach/health-centres/*
 HDX or DHIS2:.Rd
 reach/intermediates
 reach/output
+reach/archived_scripts/
+radio-africa/*
+pre-process/*
+osm/
