@@ -1,4 +1,13 @@
-﻿country_name,proj,link
+country_name,proj,link
 drc,EPSG:3231,https://epsg.io/3231-area
 nigeria,epsg:32632,https://epsg.io/32632
+benin,epsg:32632,https://epsg.io/32632
+togo,epsg:32632,https://epsg.io/32632
 niger,epsg:32632,https://epsg.io/32632
+cameroon,epsg:2064,https://epsg.io/2064-area
+mali,epsg:2056,https://epsg.io/2056-area
+senegal,epsg:2548,https://epsg.io/2548-area
+angola,epsg:3179,https://epsg.io/1029-area
+gambia,epsg:2548,https://epsg.io/2548-area
+burundi,EPSG:2071,https://epsg.io/2071-area
+ethiopia,EPSG:2825,https://epsg.io/2825-area

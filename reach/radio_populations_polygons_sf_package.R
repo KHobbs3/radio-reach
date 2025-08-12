@@ -13,7 +13,7 @@ options(warn = -1)  # Suppress warnings
 
 # Variable selection
 country <- "nigeria"
-station_source <- "fem_nigeria/qgis_polygonization"
+station_source <- "fem_nigeria"
 facility_source <- "HDX"
 km <- 5
 
@@ -51,9 +51,6 @@ station_list <- lapply(gpkg_files, function(file) {
   # add column
   radio_polygon$source_file <- basename(file)
   
-  # assign crs
-  # radio_polygon <- st_set_crs(radio_polygon, "EPSG:4326")
-  
   # reproject
   radio_polygon <- st_transform(radio_polygon, crs(population_raster))
   
@@ -67,7 +64,7 @@ print(sprintf("Reading health facilities data from %s...", facility_source))
 hf <- st_read(list.files(here("reach", "health-centres", facility_source, country), pattern = '*.geojson$', full.names = T)[1])
 
 # Reproject from degrees to area projection
-hf_proj <- st_transform(hf, area_proj)
+hf_proj <- st_transform(hf, crs=area_proj)
 
 # Add x-KM buffer in an areal projection
 print(sprintf("----- KM: %s -----", km))
@@ -97,12 +94,12 @@ for (i in seq_along(station_list)) {
     station <- station_list[[i]]
     
     # Verbosity: get station name
-    sname = str_sub(basename(gpkg_files[i]), 1, 31)
+    sname = str_sub(basename(gpkg_files[i]), 11, 41)
     print(sprintf("Station %s of %s: %s", i, length(station_list), sname))
 
     # Clip station bounds to the buffered facility locations
     cropped_polygons <- st_intersection(station, hf_buffer_deg)
-    
+
     if (!nrow(cropped_polygons) == 0) {
       # Population coverage calculations ----
       print("Calculating X-km population coverage..")
@@ -136,26 +133,24 @@ for (i in seq_along(station_list)) {
       }
       
       # Export
-      print("Exporting intermediate output..")
-      dir.create(file.path(here(sprintf("reach/intermediates/%s/", country))))
-      st_write(cropped_polygons, dsn = here(sprintf("reach/intermediates/%s/polygons_%s_%gkm.gpkg", country, sname, km)),
-               append = F)
+      # print("Exporting intermediate output..")
+      # dir.create(file.path(here(sprintf("reach/intermediates/%s/", country))))
+      # st_write(cropped_polygons, dsn = here(sprintf("reach/intermediates/%s/polygons_%s_%gkm.gpkg", country, sname, km)),
+      #          append = F)
     }
 
 
 # Export summary output ----
 print("Exporting summary output...")
 dir.create(file.path(here("reach", "output", country)))
-write.csv(population_data, here("reach", "output", country, sprintf("%s_%s_summary_reach_sf_orig_proj.csv", country, station_source)), row.names = F)
+write.csv(population_data, here("reach", "output", country, sprintf("%s_%s_summary_reach_%skm.csv", country, station_source, km)), row.names = F)
 capture.output(summary(errors), file = here("reach", "output", country, "error_no_populaiton.txt"))
 print("Fin.")
 
 # Checks
-
-# mapview(hf_buffer, col.regions = "blue") +
-  mapview(population_raster, col.regions = "green",
+mapview(population_raster, col.regions = "green",
           na.color = NA) +
-    # mapview(cropped_polygons, col.regions = 'blue') +
-    mapview(station_list[[1]], col.regions = "red") +
-    mapview(hf_buffer_deg, col.regions = "red") 
+  mapview(station_list[[1]], col.regions = "red") +
+    mapview(hf_buffer_deg, col.regions = "blue") 
     
+  

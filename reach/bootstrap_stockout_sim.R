@@ -12,12 +12,16 @@ library(raster)
 options(warn = -1)  # Suppress warnings
 
 # Variable selection
-country <- "niger" # main folder where radio gpkgs are stored
-station_source <- "marion_partners" # subfolder "
+country <- "togo" # main folder where radio gpkgs are stored
+station_source <- "fem_togo" # subfolder
+
 facility_source <- "HDX" # folder name = data source for health facilities
 km <- 5 # km buffer around health facilities
-stock_freq <- 1 - 0.118 # % of facilities that are expected to have sufficient (decimal)
+stock_freq <- 1-0.88 # % of facilities that are expected to have sufficient (decimal)
+N <- 100 # how many simulations to run
 
+fem_states = "Maritime|Savanes|Plateaux" # which states we will broadcast in
+  
 # Set-up function for calculating population coverage
 pop_coverage <- function (population_raster, polygon){
   exactextractr::exact_extract(population_raster, polygon,
@@ -53,7 +57,7 @@ station_list <- lapply(gpkg_files, function(file) {
   radio_polygon$source_file <- basename(file)
   
   # assign crs
-  # radio_polygon <- st_set_crs(radio_polygon, "EPSG:4326")
+  radio_polygon <- st_set_crs(radio_polygon, "EPSG:4326")
   
   # reproject
   radio_polygon <- st_transform(radio_polygon, crs(population_raster))
@@ -65,10 +69,26 @@ station_list <- lapply(gpkg_files, function(file) {
 
 # Read health facilities (ensure CRS matches)
 print(sprintf("Reading health facilities data from %s...", facility_source))
-hf <- st_read(list.files(here("reach", "health-centres", facility_source, country), pattern = '*.geojson$', full.names = T)[1])
+hf <- st_read(list.files(here("reach", "health-centres", facility_source, country), pattern = '*hdx.geojson$', full.names = T)[1])
+
+# start of optional code block -------------
+# OPTIONAL: Isolate where FEM is working within country ---
+fem_state_bounds <- st_read(list.files(sprintf('../../General Data/HDX Boundaries/%s/', country), pattern = "\\.shp$", full.names=T)[1])
+
+hf_states <- st_join(hf, fem_state_bounds)
+
+
+hf_fem_states <- hf_states %>%
+  filter(str_detect(ADM1_FR, fem_states))
 
 # Reproject from degrees to area projection
-hf_proj <- st_transform(hf, area_proj)
+hf_proj <- st_transform(hf_fem_states, area_proj)
+unique(hf_proj$ADM1_FR)
+
+# end of optional ---------------------------
+
+# IF OPTIONAL BLOCK IS NOT USED: Reproject original hf file from degrees to area projection
+# hf_proj <- st_transform(hf, area_proj)
 
 # Randomly select x% of points --------
 # Count the number of facilities that would be in stock. Round up for conservancy
@@ -78,7 +98,7 @@ print(sprintf("%s of %s (%s percent) facilities will be retained for analysis.",
                                                                         stock_freq*100))
 
 simulate_bootstrap_once <- function(hf_proj, n, km, station_list, population_raster, i) {
-  print(sprintf("----Iteration: %s of 1000 -----", i))
+  print(sprintf("----Iteration: %s of %s -----", i, N))
   hf_sample <- hf_proj %>% slice_sample(n = n)
   
   # export intermediates for review
@@ -98,7 +118,7 @@ simulate_bootstrap_once <- function(hf_proj, n, km, station_list, population_ras
   print("Calculating population within bounds...")
   population_data <- purrr::map_dfr(seq_along(station_list), function(j) {
     station <- station_list[[j]]
-    sname <- str_sub(basename(gpkg_files[j]), 1, 31)
+    sname <- str_sub(basename(gpkg_files[j]), 11, 41)
     
     cropped <- st_intersection(station, hf_buffer)
     pop_cov <- if (nrow(cropped) > 0) pop_coverage(population_raster, cropped) else 0
@@ -118,105 +138,47 @@ simulate_bootstrap_once <- function(hf_proj, n, km, station_list, population_ras
   return(population_data)
 }
 
-# Run 1000 bootstrap iterations
-bootstrap_results <- purrr::map_dfr(1:1000, ~ simulate_bootstrap_once(hf_proj, n, km, station_list, population_raster, .x))
+# Run N bootstrap iterations
+bootstrap_results <- purrr::map_dfr(1:N, ~ simulate_bootstrap_once(hf_proj, n, km, station_list, population_raster, .x))
+
+write.csv(bootstrap_results, file = sprintf("reach/output/%s/simulated_stockouts/%s_bootstrap_results_fem_states_only.csv", country, country))
 
 # Summarize the bootstrap estimates
 summary_results <- bootstrap_results %>%
   group_by(station_name) %>%
   summarise(
-    mean_prop = mean(population_proportion, na.rm = TRUE),
-    median_prop = median(population_proportion, na.rm = TRUE),
-    lower_95 = quantile(population_proportion, 0.025, na.rm = TRUE),
-    upper_95 = quantile(population_proportion, 0.975, na.rm = TRUE)
+    mean_pop = mean(population_coverage, na.rm = TRUE),
+    median_pop = median(population_coverage, na.rm = TRUE),
+    lower_95 = quantile(population_coverage, 0.025, na.rm = TRUE),
+    upper_95 = quantile(population_coverage, 0.975, na.rm = TRUE)
   )
-# # Randomly select clinics
-# hf_stockouts <- hf_proj %>%
-#   slice_sample(n = n)
-# 
-# # Check
-# nrow(hf_stockouts) == n
-# 
-# # Add x-KM buffer in an areal projection
-# print(sprintf("Adding %s buffer...", km))
-# 
-# hf_buffer <- hf_proj %>% 
-#   st_buffer(dist = km * 1000) %>% 
-#   st_union() %>%
-#   st_sf()
-# 
-# # Reproject health facilities to the popgrid degrees proj
-# hf_buffer_deg <- st_transform(hf_buffer, crs(population_raster))
-# 
-# # Set-up table for export ----
-# population_data <- tibble(source_file = character(),
-#                           population_coverage = numeric(),
-#                           radio_coverage = numeric(),
-#                           population_proportion = numeric(),
-#                           kilometre = integer(),
-#                           station_name = character()
-# )
-# 
-# # Iterator ----
-# errors = list()
-# 
-# # Loop for each distance in km
-# for (i in seq_along(station_list)) {
-#   station <- station_list[[i]]
-#   
-#   # Verbosity: get station name
-#   sname = str_sub(basename(gpkg_files[i]), 1, 31)
-#   print(sprintf("Station %s of %s: %s", i, length(station_list), sname))
-#   
-#   # Clip station bounds to the buffered facility locations
-#   cropped_polygons <- st_intersection(station, hf_buffer_deg)
-#   
-#   if (!nrow(cropped_polygons) == 0) {
-#     # Population coverage calculations ----
-#     print("Calculating X-km population coverage..")
-#     population_coverage <- pop_coverage(population_raster, cropped_polygons)
-#   } else {
-#     population_coverage <- 0
-#   }
-#   
-#   print("Calculating radio station population coverage..")
-#   radio_coverage <- pop_coverage(population_raster, station)
-#   
-#   # Ensure polygon covers a population
-#   if (length(radio_coverage) == 0){
-#     len <- length(errors)
-#     
-#     # append value to end of list
-#     errors[[len+1]] <- sname
-#     
-#   } else {
-#     
-#     # Collect data for each radio station
-#     population_data <- population_data %>%
-#       add_row(
-#         source_file = sname,
-#         population_coverage = population_coverage,
-#         radio_coverage = radio_coverage,
-#         population_proportion = population_coverage / radio_coverage,
-#         kilometre = km,
-#         station_name = sname
-#       )
-#   }
-# }
-# 
-# 
-# # Export summary output ----
-# print("Exporting summary output...")
-# dir.create(file.path(here("reach", "output", country)))
-# write.csv(population_data, here("reach", "output", country, sprintf("%s_%s_summary_reach_sf_orig_proj.csv", country, station_source)), row.names = F)
-# capture.output(summary(errors), file = here("reach", "output", country, "error_no_population.txt"))
-# print("Fin.")
+
+write.csv(summary_results, file = sprintf("reach/output/%s/simulated_stockouts/%s_bootstrap_summary_fem_states_only.csv", country, country))
+
 
 # Checks
 
 # mapview(hf_buffer, col.regions = "blue") +
 mapview(population_raster, col.regions = "green",
-        na.color = NA) +
-  # mapview(cropped_polygons, col.regions = 'blue') +
-  mapview(station_list[[1]], col.regions = "red") +
-  mapview(hf_buffer_deg, col.regions = "red") 
+na.color = NA) +
+  mapview(hf_buffer, col.regions = 'blue') +
+  mapview(station_list[[2]], col.regions = "red") +
+  mapview(station_list[[2]], col.regions = "red") +
+  mapview(station_list[[3]], col.regions = "red") +
+  mapview(station_list[[4]], col.regions = "red") +
+  mapview(station_list[[5]], col.regions = "red") +
+  mapview(station_list[[6]],H0 col.regions = "red") +
+  mapview(station_list[[7]], col.regions = "red") +
+  mapview(station_list[[8]], col.regions = "red") +
+  mapview(station_list[[9]], col.regions = "red") +
+  mapview(station_list[[10]], col.regions = "red") +
+  mapview(station_list[[11]], col.regions = "red") +
+  mapview(station_list[[12]], col.regions = "red") +
+  mapview(station_list[[13]], col.regions = "red") +
+  mapview(station_list[[14]], col.regions = "red") +
+  mapview(station_list[[15]], col.regions = "red") +
+  mapview(station_list[[16]], col.regions = "red") +
+  mapview(station_list[[17]], col.regions = "red") +
+  mapview(station_list[[18]], col.regions = "red") +
+  mapview(station_list[[19]], col.regions = "red") +
+  mapview(station_list[[20]], col.regions = "red") 
