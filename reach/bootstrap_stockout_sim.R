@@ -12,16 +12,18 @@ library(raster)
 options(warn = -1)  # Suppress warnings
 
 # Variable selection
-country <- "togo" # main folder where radio gpkgs are stored
-station_source <- "fem_togo" # subfolder
+country <- "cameroon" # main folder where radio gpkgs are stored
+station_source <- "fem_cameroon" # subfolder
 
 facility_source <- "HDX" # folder name = data source for health facilities
 km <- 5 # km buffer around health facilities
-stock_freq <- 1-0.88 # % of facilities that are expected to have sufficient (decimal)
+stock_freq <- 0.74 # % of facilities that are expected to have sufficient stock (decimal)
 N <- 100 # how many simulations to run
 
-fem_states = "Maritime|Savanes|Plateaux" # which states we will broadcast in
-  
+region_dict <- read.csv("reach/fem_regions.csv")
+fem_regions <- region_dict %>% filter(country_name == country) %>% pull(regions)
+print(paste("REGIONS: ", fem_regions))
+
 # Set-up function for calculating population coverage
 pop_coverage <- function (population_raster, polygon){
   exactextractr::exact_extract(population_raster, polygon,
@@ -37,7 +39,7 @@ print(area_proj)
 
 # Read population raster and reproject it
 print("Reading population raster...")
-population_raster <- raster(list.files(here("reach", "populations", country), full.names = T, pattern = "*.tif$")[1])
+population_raster <- rast(list.files(here("reach", "populations", country), full.names = T, pattern = "*.tif$")[1])
 
 
 # Read in all possible stations
@@ -73,17 +75,18 @@ hf <- st_read(list.files(here("reach", "health-centres", facility_source, countr
 
 # start of optional code block -------------
 # OPTIONAL: Isolate where FEM is working within country ---
-fem_state_bounds <- st_read(list.files(sprintf('../../General Data/HDX Boundaries/%s/', country), pattern = "\\.shp$", full.names=T)[1])
+fem_state_bounds <- st_read(list.files(sprintf('../../../General Data/HDX Boundaries/%s/', country), pattern = "\\.shp$", full.names=T)[1])
 
 hf_states <- st_join(hf, fem_state_bounds)
 
 
 hf_fem_states <- hf_states %>%
-  filter(str_detect(ADM1_FR, fem_states))
+  filter(str_detect(region, fem_regions))
 
 # Reproject from degrees to area projection
 hf_proj <- st_transform(hf_fem_states, area_proj)
-unique(hf_proj$ADM1_FR)
+unique(hf_proj$ADM1_EN)
+
 
 # end of optional ---------------------------
 
@@ -141,7 +144,7 @@ simulate_bootstrap_once <- function(hf_proj, n, km, station_list, population_ras
 # Run N bootstrap iterations
 bootstrap_results <- purrr::map_dfr(1:N, ~ simulate_bootstrap_once(hf_proj, n, km, station_list, population_raster, .x))
 
-write.csv(bootstrap_results, file = sprintf("reach/output/%s/simulated_stockouts/%s_bootstrap_results_fem_states_only.csv", country, country))
+write.csv(bootstrap_results, file = sprintf("reach/output/%s/simulated_stockouts/%s_%g_bootstrap_results_fem_states_only.csv", country, country, stock_freq))
 
 # Summarize the bootstrap estimates
 summary_results <- bootstrap_results %>%
@@ -153,7 +156,7 @@ summary_results <- bootstrap_results %>%
     upper_95 = quantile(population_coverage, 0.975, na.rm = TRUE)
   )
 
-write.csv(summary_results, file = sprintf("reach/output/%s/simulated_stockouts/%s_bootstrap_summary_fem_states_only.csv", country, country))
+write.csv(summary_results, file = sprintf("reach/output/%s/simulated_stockouts/%s_%g_bootstrap_summary_fem_states_only.csv", country, country, stock_freq))
 
 
 # Checks

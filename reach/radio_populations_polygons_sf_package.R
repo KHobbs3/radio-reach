@@ -12,8 +12,8 @@ library(raster)
 options(warn = -1)  # Suppress warnings
 
 # Variable selection
-country <- "nigeria"
-station_source <- "fem_nigeria"
+country <- "cameroon"
+station_source <- "kh_cameroon"
 facility_source <- "HDX"
 km <- 5
 
@@ -32,7 +32,7 @@ print(area_proj)
 
 # Read population raster and reproject it
 print("Reading population raster...")
-population_raster <- raster(list.files(here("reach", "populations", country), full.names = T, pattern = "*.tif$")[1])
+population_raster <- rast(list.files(here("reach", "populations", country), full.names = T, pattern = "*.tif$")[1])
 
 
 # Read in all possible stations
@@ -51,7 +51,7 @@ station_list <- lapply(gpkg_files, function(file) {
   # add column
   radio_polygon$source_file <- basename(file)
   
-  # reproject
+  # reproject station to match population grid
   radio_polygon <- st_transform(radio_polygon, crs(population_raster))
   
   # return
@@ -149,8 +149,8 @@ print("Fin.")
 
 # Checks
 mapview(population_raster, col.regions = "green",
-          na.color = NA) +
+          na.color = NA)
   mapview(station_list[[1]], col.regions = "red") +
-    mapview(hf_buffer_deg, col.regions = "blue") 
+    mapview(cropped_polygons, col.regions = "blue") 
     
   
