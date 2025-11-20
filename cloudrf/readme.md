@@ -63,6 +63,8 @@ python3 -m pip install -r requirements.txt
 
 4.  Run reach estimations: see `../reach/` folder for scripts.
 
+5. Run overlap estimates: `estimate_overlap.R`: creates unique pairs between station GPKGs and calculates population covered by their overlaps.
+
 ## Environment Variables
 
 To run this project, you will need to add the following environment variables to your .env file

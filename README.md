@@ -34,14 +34,19 @@ python3 -m pip install -r requirements.txt
 
 -   `run_cloudRF.sh`: run selected or all CSV files detailing radio station specs through CloudRF API to generate KMZ files.
 
-**3. Population Coverage:**
+**3. Convert radio rasters to polygons:**
+- `cloudrf/raster_to_polygon.ipynb`: designate the country and/or folder name to run conversion of all raw raster files outputted from (3) into Geopackage (GPKG) polygons.
+
+
+**4. Population Coverage:**
 
 -   `radio_populations_polygons.R`: (FAST) estimates radio station coverage and population living within 5-km of health facilities within radio bounds. This script converts the radio raster to a polygon to perform these calculations.
 -   `radio_populations.R`: (SLOW) estimates radio station coverage and population living within 1,2,3,4,5-km of health facilities within radio bounds. This script uses the radio raster and involves pixel re-sampling and resizing rasters to match the resolution of the population grid and extent of the station propagation. As a result, the script is incredibly slow, although may be more precise in terms of population grid inclusions.
+
+**5. Calculate overlapping populations:**
+- `cloudrf/estimate_overlap.R`: creates unique pairs between station GPKGs and calculates population covered by their overlaps.
 
 ## Usage
 
 1.  `./run_cloudRF.sh`
 2.  `RScript radio_populations_polygons.R --country="country" --fs="FACILITY SOURCE FOLDER"`
-
-## Roadmap
