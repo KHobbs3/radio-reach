@@ -12,9 +12,9 @@ library(raster)
 options(warn = -1)  # Suppress warnings
 
 # Variable selection
-country <- "nigeria"
-station_source <- "fem_nigeria" # folder name in which station GPKGs are stored
-facility_source <- "Academics" # folder name in which facility points are stored
+country <- "niger"
+station_source <- "fem_niger" # folder name in which station GPKGs are stored
+facility_source <- "HDX" # folder name in which facility points are stored
 pop_year <- 2026 # population grid year
 km <- 5 # kilometer buffer to assign around health facilities
 
@@ -32,7 +32,7 @@ area_proj <- proj_df %>% filter(country_name == country) %>% pull(proj)
 print(area_proj)
 
 # Read population raster and reproject it
-print("Reading population raster...")
+sprintf("Reading population raster for %s %s...", country, pop_year)
 population_raster <- rast(list.files(here("reach", "populations", country),
                                      full.names = T,
                                      pattern = sprintf(".*%s.*.tif$", pop_year))[1])
@@ -100,7 +100,7 @@ population_data <- tibble(source_file = character(),
                           population_coverage = numeric(),
                           radio_coverage = numeric(),
                           population_proportion = numeric(),
-                          kilometre = integer(),
+                          kilometre = integer()
                           )
 
 # Iterator ----
@@ -111,6 +111,7 @@ for (i in seq_along(station_list)) {
     station <- station_list[[i]]
     
     # Verbosity: get station name
+    sname = str_sub(basename(gpkg_files[i]), 11, 41)
     print(sprintf("Station %s of %s: %s", i, length(station_list), sname))
 
     # Clip station bounds to the buffered facility locations
