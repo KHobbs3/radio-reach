@@ -1,16 +1,20 @@
 library(sf)
 library(dplyr)
 library(purrr)
+library(here)
 
 
 # Set country
-country <- 'niger'
-subfolder <- 'poc_zinder'
+country <- 'togo'
+subfolder <- 'fem_togo'
+pop_year <- 2026 # population grid year
 
 
 # Read population raster and reproject it
 print("Reading population raster...")
-population_raster <- raster(list.files(here("reach", "populations", country), full.names = T, pattern = "*.tif$")[1])
+population_raster <- rast(list.files(here("reach", "populations", country),
+                                     full.names = T,
+                                     pattern = sprintf(".*%s.*.tif$", pop_year))[1])
 
 # Get file path
 filepath = file.path("cloudrf", "output/gpkg", country, subfolder)
@@ -104,4 +108,5 @@ overlap_df <- bind_rows(map(file_pairs, ~ estimate_overlap(.x[1], .x[2])))
 
 # Print results
 print(overlap_df)
-write.csv(overlap_df, sprintf("cloudrf/output/overlaps/%s_%s_overlap.csv", country, subfolder))   
+write.csv(overlap_df, sprintf("cloudrf/output/overlaps/%s_%s_overlap_constrained_%s.csv", country, subfolder, pop_year))   
+
