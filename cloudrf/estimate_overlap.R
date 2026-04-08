@@ -2,12 +2,19 @@ library(sf)
 library(dplyr)
 library(purrr)
 library(here)
+library(terra)
 
 
 # Set country
-country <- 'togo'
-subfolder <- 'fem_togo'
-pop_year <- 2026 # population grid year
+country <- 'benin'
+# subfolder <- '../../../../reach/intermediates/senegal/'
+subfolder <- 'fem_benin_projects'
+pop_year <- 2025 # population grid year
+
+# Set projection to equal area projection for country
+proj_df <- read.csv('reach/country_projections.csv')
+proj <- proj_df %>% filter(country_name == country) %>% pull(proj)
+print(proj)
 
 
 # Read population raster and reproject it
@@ -24,37 +31,59 @@ print(filepath)
 file_list <-list.files(path = filepath, pattern = "\\.gpkg$", full.names = TRUE)
 
 
-# # ------------------------
-# # For selected files ----
-# # ------------------------
-# # Prompt user for polygons to compare
-# cat("Select file #1:")
-# print(file_list)
-# index1 <- readline("Enter the # for file #1: ")
-# file1 <- file_list[as.numeric(index1)]
-# 
-# cat("Select file #2:")
-# print(file_list)
-# index2 <- readline("Enter the # for file #2: ")
-# file2 <- file_list[as.numeric(index2)]
-#   
-# # Read geodataframes
-# gdf1 <- st_read(file1) %>% st_transform(proj)
-# gdf2 <- st_read(file2) %>% st_transform(proj)
-# 
-# # Compute overlap
-# overlap <- st_intersection(gdf1, gdf2)
-# 
-# # Export for validation
-# out_name <- readline("Enter the output file name: ")
-# st_write(overlap, file.path('cloudrf', "output", "overlaps", sprintf("%s_%s_overlap.gpkg", country, out_name)))
-# 
-# # Calculate population coverage
-# overlap_pop <- exactextractr::exact_extract(population_raster, overlap, 
-#                              fun = function(values, coverage_fractions) {
-#                                sum(values * coverage_fractions, na.rm = TRUE)
-#                              })
-# print(overlap_pop)
+# ------------------------
+# For selected files ----
+# ------------------------
+# (optional) Set-up table for export ----
+overlaps_df <- tibble(
+  source_file_1 = character(),
+  source_file_2 = character(),
+  population_coverage = numeric(),
+  popgrid_year = integer()
+)
+
+# Prompt user for polygons to compare
+cat("Select file #1:")
+print(file_list)
+index1 <- readline("Enter the # for file #1: ")
+file1 <- file_list[as.numeric(index1)]
+
+cat("Select file #2:")
+print(file_list)
+index2 <- readline("Enter the # for file #2: ")
+file2 <- file_list[as.numeric(index2)]
+
+# Read geodataframes
+gdf1 <- st_read(file1) %>% st_transform(proj)
+gdf2 <- st_read(file2) %>% st_transform(proj)
+
+# Compute overlap
+overlap <- st_intersection(gdf1, gdf2)
+
+# Export for validation
+out_name <- readline("Enter the output file name: ")
+st_write(overlap, file.path('cloudrf', "output", "overlaps", sprintf("%s_%s_overlap.gpkg", country, out_name)))
+
+# Calculate population coverage
+overlap_pop <- exactextractr::exact_extract(population_raster, overlap,
+                             fun = function(values, coverage_fractions) {
+                               sum(values * coverage_fractions, na.rm = TRUE)
+                             })
+print(overlap_pop) 
+file1
+file2
+
+# (optional) update export table
+overlaps_df <- overlaps_df %>%
+  add_row(
+    source_file_1 = basename(file1),
+    source_file_2 = basename(file2),
+    population_coverage = overlap_pop,
+    popgrid_year = pop_year
+  )
+
+
+write.csv(overlaps_df, file.path('cloudrf', "output", "overlaps", subfolder, sprintf("%s_overlap.csv", subfolder)))
 
 # ------------------------
 # For the whole list ----
@@ -82,8 +111,8 @@ estimate_overlap <- function(file1, file2) {
       } else {
     
         # Attempt to write the overlap file
-        st_write(overlap, sprintf("cloudrf/output/overlaps/gpkg/overlap_%s_%s", basename(file1), basename(file2)),
-                 append = FALSE)
+        # st_write(overlap, sprintf("cloudrf/output/overlaps/gpkg/overlap_%s_%s", basename(file1), basename(file2)),
+                 # append = FALSE)
         
         # Attempt to compute population for the overlap
         overlap_population <- exactextractr::exact_extract(population_raster, overlap, 
@@ -108,5 +137,5 @@ overlap_df <- bind_rows(map(file_pairs, ~ estimate_overlap(.x[1], .x[2])))
 
 # Print results
 print(overlap_df)
-write.csv(overlap_df, sprintf("cloudrf/output/overlaps/%s_%s_overlap_constrained_%s.csv", country, subfolder, pop_year))   
-
+write.csv(overlap_df, sprintf("cloudrf/output/overlaps/%s/%s_overlap_constrained_%s.csv",
+                              subfolder, subfolder, pop_year))   
