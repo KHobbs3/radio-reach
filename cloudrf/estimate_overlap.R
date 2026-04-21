@@ -69,7 +69,7 @@ overlap_pop <- exactextractr::exact_extract(population_raster, overlap,
                              fun = function(values, coverage_fractions) {
                                sum(values * coverage_fractions, na.rm = TRUE)
                              })
-print(overlap_pop) 
+print(overlap_pop)
 file1
 file2
 
@@ -89,44 +89,41 @@ write.csv(overlaps_df, file.path('cloudrf', "output", "overlaps", subfolder, spr
 # For the whole list ----
 # ------------------------
 # Function to estimate population overlap between two polygons
-estimate_overlap <- function(file1, file2) {
+estimate_overlap <- function(file1, file2, crs = proj) {  # ← inherit proj
   
-  f1 <- st_read(file1)
-  f2 <- st_read(file2)
+  f1 <- st_read(file1) |> st_transform(crs)  # ← same as selected-files path
+  f2 <- st_read(file2) |> st_transform(crs)
   
-  # CRS are made to match in the .ipynb notebook that generates the GPKG files
-  f1 <- st_transform(f1, "epsg:4326")
-  f2 <- st_transform(f2, "epsg:4326")
-  
-  # Identify overlapping areas 
   tryCatch({
-      overlap <- st_intersection(f1, f2)
-  
+    overlap <- st_intersection(f1, f2)
     
-      # If no overlap exists, return an empty result
-      if (nrow(overlap) == 0) {
-        
-          return(data.frame(file1 = basename(file1), file2 = basename(file2), overlap_population = 0))
-        
-      } else {
+    if (nrow(overlap) == 0) {
+      return(data.frame(file1 = basename(file1), file2 = basename(file2), overlap_population = 0))
+      
+    } else {
+      
+      # Union in case dissolved files still have multiple features
+      overlap_unioned <- st_union(overlap) |> st_as_sf()
+      
+      overlap_population <- exactextractr::exact_extract(
+        population_raster, 
+        overlap_unioned,
+        fun = function(values, coverage_fractions) {
+          sum(values * coverage_fractions, na.rm = TRUE)
+        }
+      ) |> sum(na.rm = TRUE)  # collapse to scalar
+      
+      return(data.frame(
+        file1              = basename(file1),
+        file2              = basename(file2),
+        overlap_population = overlap_population
+      ))
+    }
     
-        # Attempt to write the overlap file
-        # st_write(overlap, sprintf("cloudrf/output/overlaps/gpkg/overlap_%s_%s", basename(file1), basename(file2)),
-                 # append = FALSE)
-        
-        # Attempt to compute population for the overlap
-        overlap_population <- exactextractr::exact_extract(population_raster, overlap, 
-                                                           fun = function(values, coverage_fractions) {
-                                                             sum(values * coverage_fractions, na.rm = TRUE)
-                                                           })
-        
-        return(data.frame(file1 = basename(file1), file2 = basename(file2), overlap_population = overlap_population))
-      }
-    }, error = function(e) {
-      message(sprintf("Error processing %s and %s: %s", basename(file1), basename(file2), e$message))
-      return(data.frame(file1 = basename(file1), file2 = basename(file2), overlap_population = NA))
+  }, error = function(e) {
+    message(sprintf("Error processing %s and %s: %s", basename(file1), basename(file2), e$message))
+    return(data.frame(file1 = basename(file1), file2 = basename(file2), overlap_population = NA))
   })
-    
 }
 
 # Generate all unique file pairs
@@ -138,4 +135,14 @@ overlap_df <- bind_rows(map(file_pairs, ~ estimate_overlap(.x[1], .x[2])))
 # Print results
 print(overlap_df)
 write.csv(overlap_df, sprintf("cloudrf/output/overlaps/%s/%s_overlap_constrained_%s.csv",
-                              subfolder, subfolder, pop_year))   
+                              subfolder, subfolder, pop_year))
+
+# View
+library(mapview)
+pair <- file_pairs[[1]]
+
+f1 <- st_read(pair[1])
+f2 <- st_read(pair[2])
+
+mapview(gdf1)+
+  mapview(gdf2, col.regions='yellow')
